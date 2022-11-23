@@ -5,7 +5,7 @@ import scrapy
 from webscrap.items import CrawlerTutuAnnaItem
 from scrapy.loader import ItemLoader
 import re
-from scrapy_splash import SplashRequest
+from scrapy_splash import SplashRequest, SplashFormRequest
 from scrapy import FormRequest
 from scrapy.shell import inspect_response
 
@@ -15,20 +15,19 @@ class AceSpider(scrapy.Spider):
     start_urls = ['https://store.ace.jp/shop/default.aspx']
 
     def parse(self, response, **kwargs):
-        myheader = {"Content-Type": "text/plain"}
-        form_data = {"cart":{"items":[]},
-                    "section":"cart",
-                    "account":"CTX-3V6ctADU",
-                    "uid":"cfc96362-2a9c-43f4-bfd2-6a8d004ebdaa",
-                    "location":"https://store.ace.jp/shop/pages/search.aspx?search=x&q=%E3%82%AA%E3%83%B3%E3%82%AA%E3%83%95",
-                    "referer":""}
-        # yield FormRequest.from_response(response,
-        #                                 formdata=form_data,
-        #                                 callback=self.parse_search)
-        
-        yield SplashRequest("https://store.ace.jp/shop/pages/search.aspx?search=x&q=%E3%82%AA%E3%83%B3%E3%82%AA%E3%83%95", callback=self.parse_search, args={'wait': 10}) 
+        form_data = {"search": "x","q": "オンオフ"}
+
+        yield SplashFormRequest.from_response(
+                response,
+                callback=self.parse_search,
+                formdata=form_data, 
+                args={'wait': 10}) 
 
     def parse_search(self, response):
-        # pass
-        search_page = inspect_response(response, self)
+        print("URL = ", response.url)
+
+        search_results = response.css("div._searchresults")
+        items = search_results.css("div._item")
+        for item in items:
+            print(item.css("div._title>a::text").get(), item.css("div._title>a").attrib['href'])
         # print(search_page.css('div.searchresults'))
